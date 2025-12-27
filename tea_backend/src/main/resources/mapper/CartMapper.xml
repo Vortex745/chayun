@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xu.tea.mapper.CartMapper">
+
+    <select id="selectByUserId" resultType="com.xu.tea.entity.Cart">
+        SELECT
+            c.*,
+            t.name AS teaName,
+            t.img_url AS imgUrl,
+            t.price AS price
+        FROM t_cart c
+                 LEFT JOIN t_tea t ON c.tea_id = t.id
+        WHERE c.user_id = #{userId}
+        ORDER BY c.create_time DESC
+    </select>
+
+    <select id="selectByUserIdAndTeaId" resultType="com.xu.tea.entity.Cart">
+        SELECT * FROM t_cart
+        WHERE user_id = #{userId} AND tea_id = #{teaId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_cart (user_id, tea_id, count, create_time)
+        VALUES (#{userId}, #{teaId}, #{count}, NOW())
+    </insert>
+
+    <update id="updateCount">
+        UPDATE t_cart SET count = #{count} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM t_cart WHERE id = #{id}
+    </delete>
+
+</mapper>

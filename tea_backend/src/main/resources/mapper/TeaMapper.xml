@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xu.tea.mapper.TeaMapper">
+
+    <select id="selectAll" resultType="com.xu.tea.entity.Tea">
+        SELECT * FROM t_tea ORDER BY create_time DESC
+    </select>
+    <select id="selectById" resultType="com.xu.tea.entity.Tea">
+        SELECT * FROM t_tea WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_tea (name, price, stock, content, img_url, create_time)
+        VALUES (#{name}, #{price}, #{stock}, #{content}, #{imgUrl}, NOW())
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM t_tea WHERE id = #{id}
+    </delete>
+    <update id="update">
+        UPDATE t_tea
+        SET name = #{name},
+            price = #{price},
+            stock = #{stock},
+            content = #{content},
+            img_url = #{imgUrl}
+        WHERE id = #{id}
+    </update>
+</mapper>
