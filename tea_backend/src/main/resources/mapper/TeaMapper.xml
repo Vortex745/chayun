@@ -12,7 +12,7 @@
         SELECT * FROM t_tea WHERE id = #{id}
     </select>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
         INSERT INTO t_tea (name, price, stock, content, img_url, create_time)
         VALUES (#{name}, #{price}, #{stock}, #{content}, #{imgUrl}, NOW())
     </insert>

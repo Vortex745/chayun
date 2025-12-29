@@ -82,4 +82,9 @@ public class OrderController {
 
         return Result.success("下单成功");
     }
+    @PostMapping("/send")
+    public Result<?> send(@RequestBody Order order) {
+        orderMapper.sendOrder(order);
+        return Result.success("发货成功");
+    }
 }

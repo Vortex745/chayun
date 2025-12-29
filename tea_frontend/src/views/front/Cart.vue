@@ -1,188 +1,168 @@
 <template>
-  <div class="cart-container">
-    <div class="page-title">我的购物车</div>
+  <div class="main-content">
 
-    <el-empty v-if="cartList.length === 0" description="购物车空空如也，快去选购吧">
-      <el-button type="primary" @click="$router.push('/front/home')">去逛逛</el-button>
-    </el-empty>
+    <div class="page-header">
+      <h2>我的茶篮子</h2>
+      <p>精选好茶，待君品尝</p>
+    </div>
 
-    <div v-else>
-      <el-card shadow="never" class="cart-item" v-for="item in cartList" :key="item.id">
-        <el-row align="middle" :gutter="20">
-          <el-col :span="3">
-            <el-image :src="item.imgUrl" class="cart-img" fit="cover" />
-          </el-col>
+    <div class="cart-container" v-loading="loading">
 
-          <el-col :span="8">
-            <div class="item-name">{{ item.teaName }}</div>
-          </el-col>
+      <div class="cart-header" v-if="cartList.length > 0">
+        <div class="col-info">商品信息</div>
+        <div class="col-price">单价</div>
+        <div class="col-num">数量</div>
+        <div class="col-total">小计</div>
+        <div class="col-action">操作</div>
+      </div>
 
-          <el-col :span="3" class="item-price">
-            ￥{{ item.price }}
-          </el-col>
+      <div class="cart-list" v-if="cartList.length > 0">
+        <div class="cart-item" v-for="item in cartList" :key="item.id">
 
-          <el-col :span="6">
-            <el-input-number
-                v-model="item.count"
-                :min="1"
-                size="small"
-                @change="(val) => handleCountChange(item.id, val)"
-            />
-          </el-col>
-
-          <el-col :span="4" style="text-align: right;">
-            <div class="subtotal">￥{{ (item.price * item.count).toFixed(2) }}</div>
-            <el-button type="danger" link size="small" @click="handleDelete(item.id)">删除</el-button>
-          </el-col>
-        </el-row>
-      </el-card>
-
-      <div class="footer-bar">
-        <div class="footer-content">
-          <div class="left">
-            共 <span class="count">{{ cartList.length }}</span> 件商品
+          <div class="col-info item-info">
+            <div class="img-wrapper">
+              <img :src="item.imgUrl" alt="商品图片" />
+            </div>
+            <div class="info-text">
+              <div class="name">{{ item.name }}</div>
+              <div class="tag">精选好茶</div>
+            </div>
           </div>
-          <div class="right">
-            <span class="label">合计：</span>
-            <span class="total-price">￥{{ totalPrice }}</span>
-            <el-button type="primary" size="large" class="checkout-btn" @click="openCheckout">去结算</el-button>
+
+          <div class="col-price">
+            <span class="price-symbol">¥</span>{{ item.price }}
+          </div>
+
+          <div class="col-num">
+            <el-input-number
+                v-model="item.num"
+                :min="1"
+                :max="item.stock"
+                size="small"
+                @change="handleNumChange(item)"
+                class="green-stepper"
+            />
+          </div>
+
+          <div class="col-total highlight">
+            <span class="price-symbol">¥</span>{{ (item.price * item.num).toFixed(2) }}
+          </div>
+
+          <div class="col-action">
+            <el-button type="danger" link :icon="Delete" @click="del(item.id)">移除</el-button>
           </div>
         </div>
       </div>
+
+      <div v-else class="empty-cart">
+        <el-empty description="茶篮子空空如也，去选点好茶吧~" :image-size="160">
+          <el-button type="success" round @click="$router.push('/front/home')">去逛逛</el-button>
+        </el-empty>
+      </div>
+
     </div>
 
-    <el-dialog v-model="dialogVisible" title="确认收货信息" width="400px">
-      <el-form :model="addressForm" label-width="70px">
-        <el-form-item label="收货人">
-          <el-input v-model="addressForm.consignee" placeholder="请输入收货人姓名" />
-        </el-form-item>
-        <el-form-item label="电话">
-          <el-input v-model="addressForm.phone" placeholder="请输入联系电话" />
-        </el-form-item>
-        <el-form-item label="地址">
-          <el-input type="textarea" v-model="addressForm.address" placeholder="请输入详细收货地址" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitOrder" :loading="submitting">确认下单</el-button>
-      </template>
-    </el-dialog>
+    <div class="cart-footer" v-if="cartList.length > 0">
+      <div class="left">
+        已选 <b>{{ cartList.length }}</b> 件商品
+      </div>
+      <div class="right">
+        <span class="total-label">合计：</span>
+        <span class="total-price"><small>¥</small>{{ totalPrice }}</span>
+        <el-button class="checkout-btn" @click="pay">立即结算</el-button>
+      </div>
+    </div>
 
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, getCurrentInstance } from 'vue'
+import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
+import { Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const { proxy } = getCurrentInstance()
 const axios = proxy.$http
 const router = useRouter()
 
+const user = JSON.parse(localStorage.getItem('tea-user') || '{}')
 const cartList = ref([])
-const dialogVisible = ref(false)
-const submitting = ref(false)
-
-// 地址表单
-const addressForm = reactive({
-  consignee: '',
-  phone: '',
-  address: ''
-})
-
-// === 核心逻辑 ===
-
-// 1. 加载购物车
-const loadCart = async () => {
-  const userStr = localStorage.getItem('tea-user')
-  if (!userStr) return
-
-  const user = JSON.parse(userStr)
-  try {
-    const res = await axios.get(`/cart/list?userId=${user.id}`)
-    if (res.data.code === '200') {
-      cartList.value = res.data.data
-    }
-  } catch (e) {
-    console.error(e)
-  }
-}
-
-// 2. 修改数量
-const handleCountChange = async (id, count) => {
-  try {
-    await axios.post(`/cart/update/${id}/${count}`)
-  } catch (e) {
-    ElMessage.error('更新失败')
-    loadCart()
-  }
-}
-
-// 3. 删除商品
-const handleDelete = (id) => {
-  ElMessageBox.confirm('确定要移出购物车吗？', '提示', { type: 'warning' })
-      .then(async () => {
-        const res = await axios.delete(`/cart/delete/${id}`)
-        if (res.data.code === '200') {
-          ElMessage.success('已删除')
-          loadCart()
-        }
-      }).catch(() => {})
-}
-
-// 4. 打开结算弹窗
-const openCheckout = () => {
-  const user = JSON.parse(localStorage.getItem('tea-user') || '{}')
-  // 自动填入注册时的信息，省去用户打字
-  addressForm.consignee = user.nickname || ''
-  addressForm.phone = user.phone || ''
-  addressForm.address = user.address || ''
-  dialogVisible.value = true
-}
-
-// 5. 提交订单
-const submitOrder = async () => {
-  if(!addressForm.consignee || !addressForm.phone || !addressForm.address) {
-    return ElMessage.warning('请填写完整的收货信息')
-  }
-
-  const user = JSON.parse(localStorage.getItem('tea-user') || '{}')
-  submitting.value = true
-
-  try {
-    const params = {
-      userId: user.id,
-      consignee: addressForm.consignee,
-      phone: addressForm.phone,
-      address: addressForm.address
-    }
-    const res = await axios.post('/order/add', params)
-
-    if (res.data.code === '200') {
-      ElMessage.success({ message: '下单成功！', duration: 2000 })
-      dialogVisible.value = false
-      // 跳转到“我的订单”页面
-      router.push('/front/myorder')
-    } else {
-      ElMessage.error(res.data.msg)
-    }
-  } catch (e) {
-    ElMessage.error('下单失败')
-  } finally {
-    submitting.value = false
-  }
-}
+const loading = ref(false)
 
 // 计算总价
 const totalPrice = computed(() => {
   let sum = 0
   cartList.value.forEach(item => {
-    sum += item.price * item.count
+    sum += item.price * item.num
   })
   return sum.toFixed(2)
 })
+
+const loadCart = async () => {
+  if(!user.id) return
+  loading.value = true
+  try {
+    const res = await axios.get('/cart/list/' + user.id)
+    if(res.data.code === '200') {
+      cartList.value = res.data.data
+    }
+  } catch(e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleNumChange = (item) => {
+  // 更新后端数量（可选）
+  axios.put('/cart/update', item)
+}
+
+const del = (id) => {
+  ElMessageBox.confirm('确定将此商品移出购物车吗？', '提示', { type: 'warning' })
+      .then(async () => {
+        const res = await axios.delete('/cart/delete/' + id)
+        if(res.data.code === '200') {
+          ElMessage.success('移除成功')
+          loadCart()
+        }
+      }).catch(() => {})
+}
+
+const pay = async () => {
+  if (!user.id) return router.push('/front/login')
+
+  // 模拟下单逻辑：创建订单 -> 清空购物车
+  // 这里假设把购物车所有商品合并成一个订单，或者每个商品一个订单
+  // 简单起见，我们假设后端有一个 /order/add 接口能处理购物车下单
+  // 或者这里可以遍历下单。
+
+  // 这是一个演示逻辑，具体看你的后端实现
+  // 这里我们假设直接把第一件商品下单演示流程
+  if(cartList.value.length === 0) return
+
+  // 简单模拟：遍历下单 (实际开发通常是传 ids 给后端批量下单)
+  try {
+    for (let item of cartList.value) {
+      const orderData = {
+        userId: user.id,
+        username: user.nickname,
+        totalPrice: item.price * item.num,
+        address: user.address || '默认地址',
+        // ...其他字段
+      }
+      await axios.post('/order/add', orderData)
+      // 顺便删掉购物车
+      await axios.delete('/cart/delete/' + item.id)
+    }
+    ElMessage.success('下单成功，请前往订单页查看')
+    loadCart()
+    router.push('/front/myorder')
+  } catch(e) {
+    ElMessage.error('下单失败')
+  }
+}
 
 onMounted(() => {
   loadCart()
@@ -190,21 +170,74 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.cart-container { width: 1000px; margin: 0 auto; padding-bottom: 80px; }
-.page-title { font-size: 24px; font-weight: bold; margin: 20px 0; }
-.cart-item { margin-bottom: 15px; }
-.cart-img { width: 80px; height: 80px; border-radius: 4px; }
-.item-name { font-size: 16px; font-weight: bold; color: #333; }
-.item-price { color: #666; }
-.subtotal { color: #f56c6c; font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+.main-content { max-width: 1100px; margin: 0 auto; padding-bottom: 100px; }
 
-.footer-bar {
-  position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
-  background: white; border-top: 1px solid #ddd; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  display: flex; justify-content: center; align-items: center; z-index: 100;
+/* 页面标题 */
+.page-header { margin-bottom: 30px; text-align: center; }
+.page-header h2 { font-size: 28px; color: #2c3e50; font-weight: 800; margin-bottom: 10px; }
+.page-header p { color: #999; font-size: 14px; letter-spacing: 2px; }
+
+/* 列表头部 */
+.cart-header {
+  display: flex; padding: 15px 20px; background: #fff;
+  border-radius: 12px 12px 0 0; color: #666; font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
 }
-.footer-content { width: 1000px; display: flex; justify-content: space-between; align-items: center; }
-.count { color: #f56c6c; font-weight: bold; margin: 0 5px; }
-.total-price { color: #f56c6c; font-size: 24px; font-weight: bold; margin-right: 20px; }
-.checkout-btn { width: 140px; font-size: 16px; }
+
+/* 列表项 */
+.cart-list { background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); overflow: hidden; }
+.cart-item {
+  display: flex; align-items: center; padding: 25px 20px;
+  border-bottom: 1px solid #f7f9fc; transition: background 0.3s;
+}
+.cart-item:hover { background: #fbfdfc; }
+.cart-item:last-child { border-bottom: none; }
+
+/* 列宽控制 */
+.col-info { flex: 2; text-align: left; }
+.col-price, .col-num, .col-total, .col-action { flex: 1; text-align: center; }
+
+/* 商品信息列 */
+.item-info { display: flex; align-items: center; gap: 20px; }
+.img-wrapper {
+  width: 80px; height: 80px; border-radius: 8px; overflow: hidden;
+  border: 1px solid #f0f0f0; flex-shrink: 0;
+}
+.img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.info-text .name { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 8px; }
+.info-text .tag { font-size: 12px; color: #55ab62; background: #e8f5e9; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+
+/* 价格与高亮 */
+.price-symbol { font-size: 12px; margin-right: 2px; }
+.highlight { color: #ff6b6b; font-weight: bold; font-size: 16px; }
+
+/* 空状态 */
+.empty-cart { background: white; padding: 40px; border-radius: 12px; text-align: center; }
+
+/* 底部结算栏 */
+.cart-footer {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  width: 1100px; background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  padding: 15px 30px; border-radius: 50px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  display: flex; justify-content: space-between; align-items: center;
+  z-index: 100; border: 1px solid #fff;
+}
+.cart-footer .left b { color: #55ab62; font-size: 18px; margin: 0 4px; }
+.cart-footer .right { display: flex; align-items: center; gap: 20px; }
+.total-label { font-size: 14px; color: #666; }
+.total-price { font-size: 24px; color: #ff6b6b; font-weight: 800; margin-right: 10px; }
+.checkout-btn {
+  background: linear-gradient(135deg, #55ab62, #3d8b4a);
+  border: none; color: white; padding: 12px 35px; border-radius: 30px;
+  font-size: 16px; font-weight: bold; letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(85, 171, 98, 0.4); transition: transform 0.2s;
+}
+.checkout-btn:hover { transform: translateY(-2px); }
+
+/* 修改 input-number 样式 */
+:deep(.green-stepper .el-input__wrapper) { box-shadow: none; background: #f2f4f6; }
+:deep(.green-stepper .el-input-number__decrease), :deep(.green-stepper .el-input-number__increase) { background: #f2f4f6; border: none; }
+:deep(.green-stepper .el-input-number__decrease:hover), :deep(.green-stepper .el-input-number__increase:hover) { color: #55ab62; }
 </style>

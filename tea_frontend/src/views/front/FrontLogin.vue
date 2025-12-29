@@ -1,54 +1,90 @@
 <template>
-  <div class="login-bg">
-    <div class="auth-box">
-      <div class="auth-left">
-        <div class="mask">
-          <h2>茶韵 · 东方好茶</h2>
-          <p>一杯好茶，品味人生浮沉。</p>
-        </div>
+  <div class="login-wrapper">
+
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+
+    <div class="auth-card-container">
+
+      <div class="visual-side" :style="{ backgroundImage: `url(${bgImage})` }">
       </div>
 
-      <div class="auth-right">
-        <div v-if="isLogin" class="form-container">
-          <h3>用户登录</h3>
-          <el-form size="large">
-            <el-form-item>
-              <el-input v-model="loginForm.username" placeholder="请输入账号" :prefix-icon="UserIcon" />
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
-            </el-form-item>
-            <el-button type="primary" style="width: 100%" @click="doLogin" :loading="loading">立即登录</el-button>
-          </el-form>
-          <div class="switch-type">
-            还没有账号？ <span @click="isLogin = false">去注册</span>
-            <span style="margin: 0 10px; color: #e0e0e0;">|</span>
-            <span class="admin-link" @click="toAdminLogin">
-      <el-icon style="vertical-align: middle;"><Setting /></el-icon> 管理员入口
-    </span>
-          </div>
-        </div>
+      <div class="form-side">
+        <div class="form-content">
 
-        <div v-else class="form-container">
-          <h3>新用户注册</h3>
-          <el-form size="large">
-            <el-form-item>
-              <el-input v-model="regForm.username" placeholder="设置账号" :prefix-icon="UserIcon" />
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="regForm.password" type="password" placeholder="设置密码" :prefix-icon="Lock" show-password />
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="regForm.nickname" placeholder="您的昵称" :prefix-icon="Postcard" />
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="regForm.phone" placeholder="手机号码" :prefix-icon="Iphone" />
-            </el-form-item>
-            <el-button type="success" style="width: 100%" @click="doRegister" :loading="loading">立即注册</el-button>
-          </el-form>
-          <div class="switch-type">
-            已有账号？ <span @click="isLogin = true">去登录</span>
+          <transition name="fade-slide" mode="out-in">
+            <div v-if="isLogin" key="login" class="form-inner">
+              <div class="form-header">
+                <h3>欢迎回来 🍵</h3>
+                <p>登录您的账号，继续品味自然</p>
+              </div>
+
+              <el-form ref="loginRef" :model="loginForm" :rules="rules" size="large" class="custom-form">
+                <el-form-item prop="username">
+                  <el-input
+                      v-model="loginForm.username"
+                      placeholder="请输入账号"
+                      :prefix-icon="User"
+                      class="rounded-input"
+                  />
+                </el-form-item>
+                <el-form-item prop="password">
+                  <el-input
+                      v-model="loginForm.password"
+                      type="password"
+                      placeholder="请输入密码"
+                      :prefix-icon="Lock"
+                      show-password
+                      class="rounded-input"
+                      @keyup.enter="doLogin"
+                  />
+                </el-form-item>
+                <el-button type="primary" class="action-btn" :loading="loading" @click="doLogin">
+                  立即登录
+                </el-button>
+              </el-form>
+
+              <div class="form-footer">
+                <span>还没有账号？</span>
+                <span class="link-text" @click="toggleMode">免费注册</span>
+              </div>
+            </div>
+
+            <div v-else key="register" class="form-inner">
+              <div class="form-header">
+                <h3>创建账号 🌱</h3>
+                <p>加入我们，探索东方树叶的魅力</p>
+              </div>
+
+              <el-form ref="regRef" :model="regForm" :rules="rules" size="large" class="custom-form">
+                <el-form-item prop="username">
+                  <el-input v-model="regForm.username" placeholder="设置账号" :prefix-icon="User" class="rounded-input"/>
+                </el-form-item>
+                <el-form-item prop="password">
+                  <el-input v-model="regForm.password" type="password" placeholder="设置密码" :prefix-icon="Lock" show-password class="rounded-input"/>
+                </el-form-item>
+                <el-form-item prop="nickname">
+                  <el-input v-model="regForm.nickname" placeholder="您的昵称" :prefix-icon="Postcard" class="rounded-input"/>
+                </el-form-item>
+
+                <el-button type="success" class="action-btn reg-btn" :loading="loading" @click="doRegister">
+                  立即注册
+                </el-button>
+              </el-form>
+
+              <div class="form-footer">
+                <span>已有账号？</span>
+                <span class="link-text" @click="toggleMode">返回登录</span>
+              </div>
+            </div>
+          </transition>
+
+          <div class="extra-links">
+            <span class="admin-link" @click="toAdminLogin">
+              <el-icon><Setting /></el-icon> 管理员入口
+            </span>
           </div>
+
         </div>
       </div>
     </div>
@@ -59,79 +95,167 @@
 import { ref, reactive, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User as UserIcon, Lock, Postcard, Iphone, Setting } from '@element-plus/icons-vue'
+import { User, Lock, Postcard, Setting } from '@element-plus/icons-vue'
+
+// 🔥🔥🔥 修复核心：正确引入图片 🔥🔥🔥
+// 假设 FrontLogin.vue 在 src/views/front/ 目录下
+// 图片在 src/assets/ 目录下
+// 路径应该是：../../assets/xxx
+import bgImage from '../../assets/login-banner.jpg'
 
 const { proxy } = getCurrentInstance()
 const axios = proxy.$http
 const router = useRouter()
 
-const isLogin = ref(true) // 控制显示登录还是注册
+const isLogin = ref(true)
 const loading = ref(false)
+const loginRef = ref(null)
+const regRef = ref(null)
 
-// 登录数据
 const loginForm = reactive({ username: '', password: '' })
-// 注册数据
-const regForm = reactive({ username: '', password: '', nickname: '', phone: '' })
+const regForm = reactive({ username: '', password: '', nickname: '' })
 
-// 登录逻辑
+const rules = {
+  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+}
+
+const toggleMode = () => {
+  isLogin.value = !isLogin.value
+  if(loginRef.value) loginRef.value.clearValidate()
+  if(regRef.value) regRef.value.clearValidate()
+}
+
 const doLogin = async () => {
-  if(!loginForm.username || !loginForm.password) return ElMessage.warning('请填写完整')
-
-  loading.value = true
-  try {
-    const res = await axios.post('/user/login', loginForm)
-    if(res.data.code === '200') {
-      ElMessage.success('登录成功')
-      // 存入 localStorage，注意 key 是 'tea-user'，和管理员的 'tea-admin-user' 区分开
-      localStorage.setItem('tea-user', JSON.stringify(res.data.data))
-      window.dispatchEvent(new Event('refreshUser'))
-      // 跳转回商城首页
-      router.push('/front/home')
-    } else {
-      ElMessage.error(res.data.msg)
+  if (!loginRef.value) return
+  await loginRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true
+      try {
+        const res = await axios.post('/user/login', loginForm)
+        if(res.data.code === '200') {
+          ElMessage.success('欢迎回来')
+          localStorage.setItem('tea-user', JSON.stringify(res.data.data))
+          window.dispatchEvent(new Event('refreshUser'))
+          router.push('/front/home')
+        } else {
+          ElMessage.error(res.data.msg)
+        }
+      } catch(e) { ElMessage.error('服务异常') }
+      finally { loading.value = false }
     }
-  } catch(e) { ElMessage.error('登录失败') }
-  finally { loading.value = false }
+  })
 }
 
-// 注册逻辑
 const doRegister = async () => {
-  if(!regForm.username || !regForm.password) return ElMessage.warning('请填写完整')
-
-  loading.value = true
-  try {
-    const res = await axios.post('/user/register', regForm)
-    if(res.data.code === '200') {
-      ElMessage.success('注册成功，请登录')
-      isLogin.value = true // 切换回登录页
-    } else {
-      ElMessage.error(res.data.msg)
+  if (!regRef.value) return
+  await regRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true
+      try {
+        const res = await axios.post('/user/register', regForm)
+        if(res.data.code === '200') {
+          ElMessage.success('注册成功，请登录')
+          isLogin.value = true
+        } else {
+          ElMessage.error(res.data.msg)
+        }
+      } catch(e) { ElMessage.error('服务异常') }
+      finally { loading.value = false }
     }
-  } catch(e) { ElMessage.error('注册失败') }
-  finally { loading.value = false }
+  })
 }
+
 const toAdminLogin = () => {
-  // 跳转到我们之前写好的后台登录页路由 '/login'
   router.push('/login')
 }
 </script>
 
 <style scoped>
-.login-bg { height: 100vh; background: #f0f2f5; display: flex; justify-content: center; align-items: center; }
-.auth-box { width: 800px; height: 500px; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex; overflow: hidden; }
-.auth-left { width: 50%; background: url('https://img.zcool.cn/community/01f4095e21545ea80120a895e63821.jpg@1280w_1l_2o_100sh.jpg') no-repeat center/cover; position: relative; }
-.mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
-.auth-right { width: 50%; padding: 40px; display: flex; flex-direction: column; justify-content: center; }
-.form-container h3 { text-align: center; margin-bottom: 30px; color: #333; }
-.switch-type { text-align: right; margin-top: 15px; font-size: 14px; color: #666; }
-.switch-type span { color: #409EFF; cursor: pointer; font-weight: bold; }
+/* 1. 布局容器 */
+.login-wrapper {
+  min-height: calc(100vh - 140px);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* 2. 背景装饰 */
+.bg-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; z-index: 0; }
+.blob-1 { width: 400px; height: 400px; background: #d4eadd; top: 0; left: 0; }
+.blob-2 { width: 350px; height: 350px; background: #ffe4d6; bottom: 0; right: 0; }
+
+/* 3. 主卡片容器 */
+.auth-card-container {
+  width: 900px; height: 550px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  display: flex; overflow: hidden;
+  z-index: 10;
+  border: 1px solid rgba(255,255,255,0.8);
+}
+
+/* --- 【左侧】纯视觉海报区 --- */
+.visual-side {
+  width: 40%;
+  height: 100%;
+  position: relative;
+  /* 背景图相关样式 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* --- 【右侧】表单区 --- */
+.form-side {
+  width: 60%;
+  padding: 40px 50px;
+  display: flex; flex-direction: column; justify-content: center; position: relative;
+  background: white;
+}
+.form-content { width: 100%; max-width: 340px; margin: 0 auto; }
+
+.form-header { text-align: left; margin-bottom: 25px; }
+.form-header h3 { font-size: 24px; color: #333; font-weight: 800; margin-bottom: 8px; }
+.form-header p { font-size: 13px; color: #999; }
+
+/* 输入框 */
+.rounded-input :deep(.el-input__wrapper) {
+  border-radius: 30px; background-color: #f7f9fb; box-shadow: none !important; padding: 0 20px;
+  border: 1px solid transparent; transition: all 0.3s;
+}
+.rounded-input :deep(.el-input__wrapper.is-focus) {
+  background-color: white; border-color: #55ab62; box-shadow: 0 0 0 3px rgba(85, 171, 98, 0.1) !important;
+}
+
+/* 按钮 */
+.action-btn {
+  width: 100%; height: 42px; border-radius: 30px; font-size: 15px; letter-spacing: 1px; font-weight: bold;
+  background: linear-gradient(135deg, #55ab62, #429e50); border: none;
+  box-shadow: 0 6px 15px rgba(85, 171, 98, 0.25);
+  transition: all 0.3s; margin-top: 15px;
+}
+.action-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(85, 171, 98, 0.35); }
+.reg-btn { background: linear-gradient(135deg, #42b983, #349669); }
+
+/* 链接 */
+.form-footer { margin-top: 20px; text-align: center; font-size: 13px; color: #999; }
+.link-text { color: #55ab62; font-weight: bold; cursor: pointer; margin-left: 5px; }
+.link-text:hover { text-decoration: underline; }
+
+.extra-links {
+  margin-top: 40px; display: flex; justify-content: center; font-size: 12px; color: #ccc;
+}
 .admin-link {
-  color: #909399; /* 灰色，低调一点 */
-  font-size: 13px;
-  cursor: pointer;
-  transition: color 0.3s;
+  cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color 0.3s;
 }
-.admin-link:hover {
-  color: #333; /* 鼠标悬停变黑 */
-}
+.admin-link:hover { color: #55ab62; }
+
+/* 动画 */
+.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.35s ease; }
+.fade-slide-enter-from { opacity: 0; transform: translateX(10px); }
+.fade-slide-leave-to { opacity: 0; transform: translateX(-10px); }
 </style>

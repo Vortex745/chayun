@@ -2,6 +2,12 @@ server:
   port: 8080
 
 spring:
+  # 【新增】文件上传大小限制
+  servlet:
+    multipart:
+      max-file-size: 6MB      # 单个文件最大 6MB
+      max-request-size: 10MB  # 整个请求最大 10MB
+
   datasource:
     url: jdbc:mysql://localhost:3306/tea_mall?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
     username: root

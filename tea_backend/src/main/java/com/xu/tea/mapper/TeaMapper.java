@@ -2,6 +2,7 @@ package com.xu.tea.mapper;// ... 原有的 package 和 import
 
 import com.xu.tea.entity.Tea;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -21,4 +22,11 @@ public interface TeaMapper {
     void deleteById(Integer id);
     // 4. 新增：更新
     void update(Tea tea);
+
+    @Select("SELECT * FROM t_tea WHERE name LIKE concat('%', #{name}, '%') ORDER BY create_time DESC")
+    List<Tea> selectByName(String name);
+
+    @Select("SELECT * FROM t_tea WHERE type = #{type} ORDER BY create_time DESC")
+    List<Tea> selectByType(String type);
+
 }

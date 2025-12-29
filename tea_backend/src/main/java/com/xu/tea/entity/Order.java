@@ -16,4 +16,11 @@ public class Order {
     private String phone;     // 电话
     private String address;   // 地址
     private Date createTime;
+    private String orderNo;
+    private Integer userId;
+    private String username;
+    private String state;
+    private String deliveryMethod;  // 快递 或 自提
+    private String courierCompany;  // 快递公司
+    private String trackingNumber;  // 快递单号
 }

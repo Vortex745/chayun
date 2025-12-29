@@ -2,10 +2,7 @@ package com.xu.tea.mapper;
 
 import com.xu.tea.entity.Order;
 import com.xu.tea.entity.TeaSalesDTO;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 import java.util.Map;
@@ -27,4 +24,6 @@ public interface OrderMapper {
     @Insert("INSERT INTO t_order (tea_name, img_url, count, total_price, status, consignee, phone, address, create_time) " +
             "VALUES (#{teaName}, #{imgUrl}, #{count}, #{totalPrice}, #{status}, #{consignee}, #{phone}, #{address}, NOW())")
     void insert(Order order);
+    @Update("UPDATE t_order SET state = '已发货', delivery_method = #{deliveryMethod}, courier_company = #{courierCompany}, tracking_number = #{trackingNumber} WHERE id = #{id}")
+    void sendOrder(Order order);
 }

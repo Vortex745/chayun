@@ -13,7 +13,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 只要访问 /images/** 的请求，都去硬盘的 D:/tea_images/ 下找
+        // 关键点：添加 file: 前缀
+        // 如果 uploadPath 是 "D:/tea_images/"，这里拼起来就是 "file:D:/tea_images/"
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("file:" + uploadPath);
     }

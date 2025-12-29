@@ -30,4 +30,6 @@ public class Tea {
 
     // 上架时间
     private Date createTime;
+    // 【新增】分类
+    private String type;
 }
