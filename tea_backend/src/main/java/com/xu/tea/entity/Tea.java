@@ -32,4 +32,6 @@ public class Tea {
     private Date createTime;
     // 【新增】分类
     private String type;
+    private Integer clickCount;
+    private String specs;
 }

@@ -1,5 +1,6 @@
 package com.xu.tea.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -17,4 +18,6 @@ public class Cart {
     private String teaName;
     private String imgUrl;
     private BigDecimal price;
+    @TableField(exist = false) // 表示这个字段不在数据库 cart 表中
+    private Tea tea;
 }

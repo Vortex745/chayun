@@ -8,25 +8,41 @@
     <select id="selectAll" resultType="com.xu.tea.entity.Tea">
         SELECT * FROM t_tea ORDER BY create_time DESC
     </select>
+
     <select id="selectById" resultType="com.xu.tea.entity.Tea">
         SELECT * FROM t_tea WHERE id = #{id}
     </select>
 
+    <select id="selectByName" resultType="com.xu.tea.entity.Tea">
+        SELECT * FROM t_tea WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+
+    <select id="selectByType" resultType="com.xu.tea.entity.Tea">
+        SELECT * FROM t_tea WHERE type = #{type}
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" >
-        INSERT INTO t_tea (name, price, stock, content, img_url, create_time)
-        VALUES (#{name}, #{price}, #{stock}, #{content}, #{imgUrl}, NOW())
+        INSERT INTO t_tea (name, price, stock, content, img_url, create_time, type, click_count, specs)
+        VALUES (#{name}, #{price}, #{stock}, #{content}, #{imgUrl}, NOW(), #{type}, #{clickCount}, #{specs})
     </insert>
 
     <delete id="deleteById">
         DELETE FROM t_tea WHERE id = #{id}
     </delete>
+
     <update id="update">
         UPDATE t_tea
-        SET name = #{name},
-            price = #{price},
-            stock = #{stock},
-            content = #{content},
-            img_url = #{imgUrl}
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="imgUrl != null">img_url = #{imgUrl},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="clickCount != null">click_count = #{clickCount},</if>
+            <if test="specs != null">specs = #{specs},</if>
+        </set>
         WHERE id = #{id}
     </update>
+
 </mapper>

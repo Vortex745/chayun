@@ -3,12 +3,30 @@
 
 <mapper namespace="com.xu.tea.mapper.CartMapper">
 
-    <select id="selectByUserId" resultType="com.xu.tea.entity.Cart">
+    <resultMap id="CartResultMap" type="com.xu.tea.entity.Cart">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="tea_id" property="teaId" />
+        <result column="count" property="count" />
+        <result column="create_time" property="createTime" />
+
+        <association property="tea" javaType="com.xu.tea.entity.Tea">
+            <id column="t_id" property="id"/>
+            <result column="t_name" property="name"/>
+            <result column="t_img_url" property="imgUrl"/>
+            <result column="t_price" property="price"/>
+            <result column="t_stock" property="stock"/>
+        </association>
+    </resultMap>
+
+    <select id="selectByUserId" resultMap="CartResultMap">
         SELECT
             c.*,
-            t.name AS teaName,
-            t.img_url AS imgUrl,
-            t.price AS price
+            t.id AS t_id,
+            t.name AS t_name,
+            t.img_url AS t_img_url,
+            t.price AS t_price,
+            t.stock AS t_stock
         FROM t_cart c
                  LEFT JOIN t_tea t ON c.tea_id = t.id
         WHERE c.user_id = #{userId}
@@ -20,7 +38,7 @@
         WHERE user_id = #{userId} AND tea_id = #{teaId}
     </select>
 
-    <insert id="insert">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_cart (user_id, tea_id, count, create_time)
         VALUES (#{userId}, #{teaId}, #{count}, NOW())
     </insert>

@@ -19,6 +19,7 @@ const routes = [
             { path: 'user', name: 'UserManage', component: () => import('../views/user/UserManage.vue') },
             { path: 'stats', name: 'SalesStats', component: () => import('../views/stats/SalesStats.vue') },
             { path: 'carousel', name: 'CarouselManage', component: () => import('../views/marketing/CarouselManage.vue') },
+            {path: 'message',name:'MessageManage',component:()=>import('../views/message/MessageManage.vue')}
         ]
     },
     // 3. 商城前台路由
