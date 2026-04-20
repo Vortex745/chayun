@@ -4,7 +4,10 @@
 <mapper namespace="com.xu.tea.mapper.OrderMapper">
 
     <select id="selectAll" resultType="com.xu.tea.entity.Order">
-        SELECT * FROM t_order ORDER BY create_time DESC
+        SELECT o.*, u.username
+        FROM t_order o
+        LEFT JOIN t_user u ON o.user_id = u.id
+        ORDER BY o.create_time DESC
     </select>
 
     <update id="updateStatus">

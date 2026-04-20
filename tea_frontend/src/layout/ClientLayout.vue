@@ -1,81 +1,115 @@
 <template>
   <div class="client-layout">
-    <div class="nav-bar">
-      <div class="nav-content">
-        <div class="left-part">
-          <div class="logo-box" @click="router.push('/front/home')">
-            <img :src="logoImage" alt="logo" class="logo-img" />
-            <span class="logo-text">茶韵商城</span>
-          </div>
-          <div class="nav-menu-container" ref="navMenuRef">
-            <div class="sliding-bar" :style="slidingBarStyle"></div>
-            <router-link to="/front/home" class="menu-item" active-class="active-link"><span>首页精选</span></router-link>
-            <router-link to="/front/cart" class="menu-item" active-class="active-link"><span>购物车</span></router-link>
-            <router-link to="/front/myorder" class="menu-item" active-class="active-link"><span>我的订单</span></router-link>
+    <!-- Navbar -->
+    <header class="nav-bar-container" :class="{ 'scrolled': isScrolled }">
+      <div class="nav-content container">
+        
+        <!-- Branding -->
+        <div class="brand-section" @click="router.push('/front/home')">
+          <img :src="logoImage" alt="茶韵" class="brand-logo" />
+          <div class="brand-text">
+            <h1>茶韵商城</h1>
+            <span class="brand-sub">Premium Selection</span>
           </div>
         </div>
 
-        <div class="right-part">
-          <el-input
+        <!-- Center Navigation -->
+        <nav class="nav-menu">
+          <router-link to="/front/home" class="nav-link" active-class="active">
+            <span>首页</span>
+          </router-link>
+          <router-link to="/front/cart" class="nav-link" active-class="active">
+            <span>选茶</span>
+          </router-link>
+          <router-link to="/front/myorder" class="nav-link" active-class="active">
+            <span>订单</span>
+          </router-link>
+          <div class="nav-indicator"></div>
+        </nav>
+
+        <!-- Right Tools -->
+        <div class="nav-tools">
+          <div class="search-wrap">
+            <el-input
               v-model="keyword"
-              placeholder="寻一味好茶..."
-              class="nav-search"
+              placeholder="搜索茶品..."
+              class="search-input"
               :prefix-icon="Search"
-              clearable
               @keyup.enter="handleSearch"
-          />
+            />
+          </div>
 
-          <div class="user-action">
+          <!-- User Menu -->
+          <div class="user-menu">
             <template v-if="user.id">
-              <el-dropdown trigger="click" popper-class="tea-dropdown-popper">
-                <div class="user-profile">
-                  <el-avatar :size="34" class="header-avatar">{{ user.nickname?.charAt(0) }}</el-avatar>
-                  <span class="username">{{ user.nickname }}</span>
-                  <el-icon class="arrow-icon"><CaretBottom /></el-icon>
+              <el-dropdown trigger="hover" popper-class="premium-dropdown">
+                <div class="avatar-capsule">
+                  <el-avatar :size="32" :src="user.avatarUrl" class="user-avatar">
+                   {{ user.nickname?.charAt(0).toUpperCase() }}
+                  </el-avatar>
+                  <span class="user-name">{{ user.nickname }}</span>
+                  <el-icon class="dropdown-arrow"><CaretBottom /></el-icon>
                 </div>
-
                 <template #dropdown>
                   <el-dropdown-menu>
+                    <div class="menu-header">
+                      <p>你好, {{ user.nickname }}</p>
+                    </div>
                     <el-dropdown-item @click="router.push('/front/user')">
                       <el-icon><User /></el-icon> 个人中心
                     </el-dropdown-item>
                     <el-dropdown-item @click="router.push('/front/myorder')">
                       <el-icon><List /></el-icon> 我的订单
                     </el-dropdown-item>
-                    <el-dropdown-item divided @click="handleLogout" class="logout-item">
+                    <el-divider class="menu-divider" />
+                    <el-dropdown-item @click="handleLogout" class="logout-item">
                       <el-icon><SwitchButton /></el-icon> 退出登录
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
             </template>
-
-            <span v-else class="login-link" @click="$router.push('/front/login')">登录 / 注册</span>
+            <div v-else class="auth-buttons">
+              <button class="btn-login" @click="router.push('/front/login')">登录</button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="main-content">
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="main-body">
       <router-view v-slot="{ Component }">
-        <transition name="fade-page" mode="out-in">
-          <keep-alive include="Home">
-            <component :is="Component" />
-          </keep-alive>
+        <transition name="fade-up" mode="out-in">
+          <component :is="Component" :key="route.fullPath" />
         </transition>
       </router-view>
-    </div>
+    </main>
 
-    <div class="footer">
-      <p>© 2025 茶韵商城 - 品味自然之美</p>
-    </div>
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-content container">
+        <div class="footer-brand">
+          <h3>茶韵商城</h3>
+          <p>一叶见方寸，一茶识人生</p>
+        </div>
+        <div class="footer-links">
+          <span>关于我们</span>
+          <span>联系客服</span>
+          <span>隐私政策</span>
+        </div>
+        <div class="copyright">
+          © 2025 茶韵 Chayun. All Rights Reserved.
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// 引入所需图标
 import { Search, User, List, SwitchButton, CaretBottom } from '@element-plus/icons-vue'
 import logoImage from '../assets/chayunlogo.png'
 
@@ -83,147 +117,266 @@ const router = useRouter()
 const route = useRoute()
 const user = ref({})
 const keyword = ref('')
+const isScrolled = ref(false)
 
-const navMenuRef = ref(null)
-const slidingBarStyle = reactive({ left: '0px', width: '0px', opacity: 0 })
-
-const updateSliderPosition = async () => {
-  await nextTick()
-  if (!navMenuRef.value) return
-  const activeItem = navMenuRef.value.querySelector('.active-link')
-  if (activeItem) {
-    slidingBarStyle.left = `${activeItem.offsetLeft}px`
-    slidingBarStyle.width = `${activeItem.offsetWidth}px`
-    slidingBarStyle.opacity = 1
-  } else {
-    slidingBarStyle.opacity = 0
-  }
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 20
 }
 
-watch(() => route.path, () => updateSliderPosition(), { immediate: true })
-const handleResize = () => updateSliderPosition()
+const handleSearch = () => {
+  if(!keyword.value) return
+  router.push({ path: '/front/home', query: { name: keyword.value } })
+}
 
-const handleSearch = () => router.push({ path: '/front/home', query: { name: keyword.value } })
-const getUserFromStorage = () => user.value = JSON.parse(localStorage.getItem('tea-user') || '{}')
+const getUser = () => {
+  user.value = JSON.parse(localStorage.getItem('tea-user') || '{}')
+}
+
 const handleLogout = () => {
   localStorage.removeItem('tea-user')
   user.value = {}
   router.push('/front/login')
 }
-const handleRefreshEvent = () => getUserFromStorage()
+
+// Event Bus
+const refreshUser = () => getUser()
 
 onMounted(() => {
-  getUserFromStorage()
-  window.addEventListener('refreshUser', handleRefreshEvent)
-  window.addEventListener('resize', handleResize)
+  getUser()
+  window.addEventListener('scroll', handleScroll)
+  window.addEventListener('refreshUser', refreshUser)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('refreshUser', handleRefreshEvent)
-  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('refreshUser', refreshUser)
 })
 </script>
 
 <style scoped>
-/* 保持原有布局样式 */
-.client-layout { background-color: #f7f9fc; min-height: 100vh; display: flex; flex-direction: column; }
-.nav-bar { height: 68px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); box-shadow: 0 2px 15px rgba(0,0,0,0.04); position: fixed; top: 0; width: 100%; z-index: 999; border-bottom: 1px solid rgba(0,0,0,0.03); }
-.nav-content { width: 1200px; margin: 0 auto; height: 100%; display: flex; align-items: center; justify-content: space-between; }
-.left-part { display: flex; align-items: center; gap: 50px; height: 100%; }
-.logo-box { display: flex; align-items: center; cursor: pointer; gap: 10px; }
-.logo-img { height: 38px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(85, 171, 98, 0.2)); }
-.logo-text { font-size: 22px; font-weight: 800; color: #2c3e50; letter-spacing: 1px; background: linear-gradient(135deg, #55ab62, #2c3e50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.nav-menu-container { display: flex; gap: 8px; position: relative; padding: 5px; background: rgba(0,0,0,0.02); border-radius: 30px; }
-.sliding-bar { position: absolute; top: 5px; bottom: 5px; left: 0; background: #55ab62; border-radius: 25px; transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 0; box-shadow: 0 4px 12px rgba(85, 171, 98, 0.25); }
-.menu-item { position: relative; z-index: 1; text-decoration: none; color: #666; font-size: 15px; font-weight: 500; padding: 8px 24px; border-radius: 25px; transition: color 0.3s ease; display: flex; align-items: center; justify-content: center; }
-.menu-item:not(.active-link):hover { color: #55ab62; background-color: rgba(85, 171, 98, 0.08); }
-.active-link { color: white !important; font-weight: bold; }
-.right-part { display: flex; align-items: center; gap: 25px; }
-.nav-search { width: 240px; transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-.nav-search:focus-within { width: 300px; }
-:deep(.el-input__wrapper) { border-radius: 25px; background-color: #f4f6f8; box-shadow: none; padding-left: 15px; transition: all 0.3s; }
-:deep(.el-input__wrapper.is-focus) { background-color: white; box-shadow: 0 0 0 2px rgba(85, 171, 98, 0.3); }
-
-/* 用户头像胶囊样式优化 */
-.user-profile {
-  display: flex; align-items: center; cursor: pointer;
-  padding: 5px 12px 5px 5px; border-radius: 30px;
-  transition: all 0.3s; background: rgba(0,0,0,0.03);
-  border: 1px solid transparent;
-}
-.user-profile:hover {
-  background: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-color: #f0f0f0;
-}
-.header-avatar { background: #55ab62; color: white; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(85,171,98,0.2); }
-.username { margin-left: 10px; font-size: 14px; font-weight: 500; color: #333; }
-.arrow-icon { margin-left: 6px; font-size: 12px; color: #999; transition: transform 0.3s; }
-.user-profile:hover .arrow-icon { transform: rotate(180deg); color: #55ab62; }
-
-.login-link { cursor: pointer; color: white; background: #55ab62; font-size: 14px; font-weight: bold; padding: 9px 22px; border-radius: 25px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(85, 171, 98, 0.3); }
-.login-link:hover { background-color: #479e53; transform: translateY(-2px); }
-.main-content { width: 1200px; margin: 85px auto 40px; min-height: 600px; }
-.footer { text-align: center; color: #bdc3c7; padding: 30px 0; font-size: 13px; }
-.fade-page-enter-active, .fade-page-leave-active { transition: opacity 0.3s ease; }
-.fade-page-enter-from, .fade-page-leave-to { opacity: 0; }
-</style>
-
-<style>
-/* 必须写在 scoped 之外才能生效 */
-.tea-dropdown-popper {
-  border-radius: 12px !important;
-  padding: 6px !important;
-  border: none !important;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+/* Layout Base */
+.client-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-body);
 }
 
-.tea-dropdown-popper .el-dropdown-menu__item {
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin-bottom: 2px;
+/* Nav Bar */
+.nav-bar-container {
+  height: 80px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+.nav-bar-container.scrolled {
+  height: 64px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Brand */
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.brand-logo {
+  height: 40px;
+  transition: height 0.3s;
+}
+.scrolled .brand-logo { height: 32px; }
+
+.brand-text h1 {
+  font-family: 'Songti SC', serif;
+  font-size: 20px;
+  margin: 0;
+  color: var(--text-main);
+  letter-spacing: 2px;
+}
+.brand-sub {
+  font-size: 10px;
+  color: var(--tea-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Menu */
+.nav-menu {
+  display: flex;
+  gap: 8px;
+  position: relative;
+  background: rgba(0,0,0,0.03);
+  padding: 4px;
+  border-radius: var(--radius-full);
+}
+.nav-link {
+  padding: 8px 24px;
   font-size: 14px;
-  color: #555;
-  transition: all 0.2s;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  transition: all 0.3s;
+  position: relative;
+  z-index: 2;
+}
+.nav-link span { position: relative; z-index: 2; }
+.nav-link:hover {
+  color: var(--tea-primary);
+}
+.nav-link.active {
+  background: white;
+  color: var(--tea-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+}
+
+/* Tools */
+.nav-tools {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.search-input {
+  width: 200px;
+  transition: width 0.3s;
+}
+.search-input:focus-within { width: 260px; }
+:deep(.el-input__wrapper) {
+  border-radius: var(--radius-full);
+  box-shadow: none;
+  background: rgba(0,0,0,0.03);
+  padding: 4px 16px;
+}
+:deep(.el-input__wrapper.is-focus) {
+  background: white;
+  box-shadow: 0 0 0 1px var(--tea-primary) !important;
+}
+
+/* User Menu */
+.avatar-capsule {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 4px 12px 4px 4px;
+  background: white;
+  border-radius: var(--radius-full);
+  border: 1px solid #eee;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.avatar-capsule:hover {
+  border-color: var(--tea-primary-light);
+  box-shadow: var(--shadow-xs);
+}
+.user-avatar { 
+  background: var(--tea-primary); 
+  font-size: 14px;
+  color: white;
+}
+.user-name { font-size: 13px; font-weight: 500; color: var(--text-main); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dropdown-arrow { font-size: 12px; color: #bbb; }
+
+.btn-login {
+  background: var(--tea-primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-login:hover { background: var(--tea-primary-hover); }
+
+/* Main Body */
+.main-body {
+  margin-top: 80px;
+  flex: 1;
+  width: 100%;
 }
 
-.tea-dropdown-popper .el-dropdown-menu__item .el-icon {
-  margin-right: 0;
-  font-size: 16px;
-  color: #888;
+/* Footer */
+.site-footer {
+  background: white;
+  padding: 60px 0 30px;
+  border-top: 1px solid rgba(0,0,0,0.03);
+  margin-top: auto;
+}
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.footer-brand h3 {
+  font-family: 'Songti SC', serif;
+  margin: 0 0 8px;
+  color: var(--text-main);
+  text-align: center;
+}
+.footer-brand p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0;
+}
+.footer-links {
+  display: flex;
+  gap: 32px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.copyright {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 20px;
 }
 
-/* 悬停效果：品牌绿背景 */
-.tea-dropdown-popper .el-dropdown-menu__item:not(.is-disabled):hover {
-  background-color: #f0f9eb !important;
-  color: #55ab62 !important;
-}
-.tea-dropdown-popper .el-dropdown-menu__item:hover .el-icon {
-  color: #55ab62 !important;
-}
+/* Transitions */
+.fade-up-enter-active, .fade-up-leave-active { transition: all 0.4s ease; }
+.fade-up-enter-from { opacity: 0; transform: translateY(20px); }
+.fade-up-leave-to { opacity: 0; transform: translateY(-20px); }
+</style>
 
-/* 退出登录：悬停变红 */
-.tea-dropdown-popper .logout-item {
-  margin-top: 5px;
-  border-top: 1px solid #f5f5f5; /* 手动分割线，比默认的好看 */
+<style>
+/* Global Dropdown Styles */
+.premium-dropdown {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  padding: 8px !important;
 }
-.tea-dropdown-popper .logout-item:hover {
-  background-color: #fef0f0 !important;
-  color: #f56c6c !important;
+.menu-header {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #aaa;
+  font-weight: 500;
 }
-.tea-dropdown-popper .logout-item:hover .el-icon {
-  color: #f56c6c !important;
+.menu-divider { margin: 4px 0 !important; }
+.el-dropdown-menu__item {
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
 }
-
-/* 隐藏默认的 ugly 分割线 */
-.tea-dropdown-popper .el-dropdown-menu__item--divided {
-  border-top: none !important;
-  margin-top: 0 !important;
+.el-dropdown-menu__item:hover {
+  background: var(--tea-primary-light) !important;
+  color: var(--tea-primary) !important;
 }
-.tea-dropdown-popper .el-dropdown-menu__item--divided::before {
-  display: none !important;
+.logout-item:hover {
+  background: #fff1f0 !important;
+  color: var(--tea-danger) !important;
 }
 </style>

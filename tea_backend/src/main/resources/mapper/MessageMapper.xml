@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xu.tea.mapper.MessageMapper">
+
+    <resultMap id="MessageMap" type="com.xu.tea.entity.Message">
+        <id property="id" column="id"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="phone" column="phone"/>
+        <result property="state" column="state"/>
+        <collection property="replyList" ofType="com.xu.tea.entity.Reply">
+            <id property="id" column="r_id"/>
+            <result property="messageId" column="r_message_id"/>
+            <result property="content" column="r_content"/>
+            <result property="createTime" column="r_create_time"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectAll" resultMap="MessageMap">
+        SELECT
+            m.*,
+            r.id AS r_id,
+            r.message_id AS r_message_id,
+            r.content AS r_content,
+            r.create_time AS r_create_time
+        FROM t_message m
+                 LEFT JOIN t_reply r ON m.id = r.message_id
+        ORDER BY m.create_time DESC, r.create_time ASC
+    </select>
+
+    <select id="selectByUserId" resultMap="MessageMap">
+        SELECT
+            m.*,
+            r.id AS r_id,
+            r.message_id AS r_message_id,
+            r.content AS r_content,
+            r.create_time AS r_create_time
+        FROM t_message m
+                 LEFT JOIN t_reply r ON m.id = r.message_id
+        WHERE m.user_id = #{userId}
+        ORDER BY m.create_time DESC, r.create_time ASC
+    </select>
+
+    <select id="countUnread" resultType="java.lang.Integer">
+        SELECT count(*) FROM t_message WHERE state = '未读'
+    </select>
+
+    <insert id="insert" parameterType="com.xu.tea.entity.Message" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_message (content, create_time, user_id, username, phone, state)
+        VALUES (#{content}, NOW(), #{userId}, #{username}, #{phone}, '未读')
+    </insert>
+
+    <update id="updateState">
+        UPDATE t_message SET state = #{state} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM t_message WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteRepliesByMessageId">
+        DELETE FROM t_reply WHERE message_id = #{messageId}
+    </delete>
+
+    <insert id="insertReply">
+        INSERT INTO t_reply (message_id, content, create_time)
+        VALUES (#{messageId}, #{content}, NOW())
+    </insert>
+
+</mapper>

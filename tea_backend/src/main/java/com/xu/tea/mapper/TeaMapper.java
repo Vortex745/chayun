@@ -20,6 +20,7 @@ public interface TeaMapper {
 
     // 3. 新增：根据 ID 删除
     void deleteById(Integer id);
+
     // 4. 新增：更新
     void update(Tea tea);
 
@@ -29,4 +30,8 @@ public interface TeaMapper {
     @Select("SELECT * FROM t_tea WHERE type = #{type} ORDER BY create_time DESC")
     List<Tea> selectByType(String type);
 
+    // 5. 扣减库存
+    @org.apache.ibatis.annotations.Update("UPDATE t_tea SET stock = stock - #{count} WHERE id = #{id} AND stock >= #{count}")
+    int updateStore(@org.apache.ibatis.annotations.Param("id") Integer id,
+            @org.apache.ibatis.annotations.Param("count") Integer count);
 }
